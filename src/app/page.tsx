@@ -45,7 +45,7 @@ export default function Home() {
           🎮 坦克大战
         </h1>
         <p className="text-gray-400 text-sm mt-1">
-          方向键/WASD 移动 · 空格键 射击 · Enter 重新开始
+          方向键/WASD 移动 · 空格 射击 · P 暂停 · M 音效
         </p>
       </div>
 
@@ -65,22 +65,48 @@ export default function Home() {
       </div>
 
       {/* 操作提示 */}
-      <div className="mt-6 flex gap-8 text-gray-500 text-sm">
-        <div className="flex flex-col items-center">
+      <div className="mt-5 flex flex-wrap justify-center gap-4 text-gray-500 text-xs">
+        <div className="flex flex-col items-center bg-white/5 rounded-lg px-3 py-2">
           <span className="text-lg mb-1">⌨️</span>
           <span>移动</span>
-          <span className="text-xs text-gray-600">WASD / 方向键</span>
+          <span className="text-gray-600">WASD / 方向键</span>
         </div>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center bg-white/5 rounded-lg px-3 py-2">
           <span className="text-lg mb-1">💥</span>
           <span>射击</span>
-          <span className="text-xs text-gray-600">空格键</span>
+          <span className="text-gray-600">空格键</span>
         </div>
-        <div className="flex flex-col items-center">
-          <span className="text-lg mb-1">🔄</span>
-          <span>重新开始</span>
-          <span className="text-xs text-gray-600">Enter</span>
+        <div className="flex flex-col items-center bg-white/5 rounded-lg px-3 py-2">
+          <span className="text-lg mb-1">🔇</span>
+          <span>音效开关</span>
+          <span className="text-gray-600">M 键</span>
         </div>
+        <div className="flex flex-col items-center bg-white/5 rounded-lg px-3 py-2">
+          <span className="text-lg mb-1">⏸️</span>
+          <span>暂停</span>
+          <span className="text-gray-600">P / Escape</span>
+        </div>
+      </div>
+
+      {/* 关卡说明 */}
+      <div className="mt-3 text-gray-600 text-xs text-center leading-relaxed">
+        <p>共 4 关 · 每关难度递增 · 击败敌人掉落道具</p>
+        <p className="mt-1">
+          <span className="text-blue-400">⚡加速</span>
+          <span className="mx-2">·</span>
+          <span className="text-yellow-400">🛡️无敌</span>
+          <span className="mx-2">·</span>
+          <span className="text-red-400">💥散弹</span>
+          <span className="mx-2">·</span>
+          <span className="text-green-400">❤️加命</span>
+        </p>
+        <p className="mt-1">
+          <span className="text-red-400">★</span> 激进型
+          <span className="mx-2">·</span>
+          <span className="text-orange-400">●</span> 防御型
+          <span className="mx-2">·</span>
+          <span className="text-purple-400">◆</span> 狙击型
+        </p>
       </div>
     </main>
   );
