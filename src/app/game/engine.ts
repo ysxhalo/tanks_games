@@ -300,53 +300,103 @@ export class GameEngine {
     this.soundManager.playShoot();
   }
 
-  /** 尝试移动坦克（带碰撞检测） */
-  tryMoveTank(tank: Tank, dx: number, dy: number) {
-    const newX = tank.x + dx;
-    const newY = tank.y + dy;
-
-    const tankRect = {
-      x: newX,
-      y: newY,
-      width: tank.width,
-      height: tank.height,
-    };
-
-    // 边界检测
-    if (
-      newX < 0 ||
-      newY < 0 ||
-      newX + tank.width > GAME_CONFIG.CANVAS_WIDTH ||
-      newY + tank.height > GAME_CONFIG.CANVAS_HEIGHT
-    ) {
-      return;
-    }
-
-    // 墙体碰撞检测
+  /** 检查指定位置是否与墙体碰撞（排除已摧毁墙和水域——水域阻挡坦克） */
+  private isTankCollidingWithWalls(tank: Tank, x: number, y: number): boolean {
+    const rect = { x, y, width: tank.width, height: tank.height };
     for (const wall of this.walls) {
       if (wall.destroyed) continue;
-      if (wall.type === WallType.WATER) {
-        if (rectsOverlap(tankRect, wall.rect)) return;
-      } else {
-        if (rectsOverlap(tankRect, wall.rect)) return;
-      }
+      if (rectsOverlap(rect, wall.rect)) return true;
+    }
+    return false;
+  }
+
+  /** 检查指定位置是否与其它坦克碰撞 */
+  private isTankCollidingWithTanks(tank: Tank, x: number, y: number): boolean {
+    const rect = { x, y, width: tank.width, height: tank.height };
+
+    // 边界检测
+    if (x < 0 || y < 0 || x + tank.width > GAME_CONFIG.CANVAS_WIDTH || y + tank.height > GAME_CONFIG.CANVAS_HEIGHT) {
+      return true;
     }
 
-    // 坦克间碰撞检测
     if (tank.isPlayer) {
       for (const enemy of this.enemies) {
         if (!enemy.alive) continue;
-        if (rectsOverlap(tankRect, enemy.rect)) return;
+        if (rectsOverlap(rect, enemy.rect)) return true;
       }
     } else {
-      if (this.player.alive && rectsOverlap(tankRect, this.player.rect)) return;
+      if (this.player.alive && rectsOverlap(rect, this.player.rect)) return true;
       for (const other of this.enemies) {
         if (!other.alive || other === tank) continue;
-        if (rectsOverlap(tankRect, other.rect)) return;
+        if (rectsOverlap(rect, other.rect)) return true;
+      }
+    }
+    return false;
+  }
+
+  /** 检查位置是否完全可通行 */
+  private isPositionFree(tank: Tank, x: number, y: number): boolean {
+    return !this.isTankCollidingWithWalls(tank, x, y) && !this.isTankCollidingWithTanks(tank, x, y);
+  }
+
+  /**
+   * 尝试移动坦克（轴分离移动 + 卡死恢复）
+   * - X轴和Y轴独立检测，实现沿墙滑动
+   * - 如果坦克当前已卡在墙中，尝试推到最近的安全位置
+   */
+  tryMoveTank(tank: Tank, dx: number, dy: number) {
+    // === 卡死恢复：如果坦克当前与墙体重叠，先推到最近的空闲位置 ===
+    if (this.isTankCollidingWithWalls(tank, tank.x, tank.y)) {
+      this.pushOutOfWalls(tank);
+      // 推出后仍然重叠？放弃本次移动
+      if (this.isTankCollidingWithWalls(tank, tank.x, tank.y)) return;
+    }
+
+    // === 轴分离移动：先尝试 X 轴，再尝试 Y 轴 ===
+    if (dx !== 0) {
+      const newX = tank.x + dx;
+      if (this.isPositionFree(tank, newX, tank.y)) {
+        tank.x = newX;
       }
     }
 
-    tank.move(dx, dy);
+    if (dy !== 0) {
+      const newY = tank.y + dy;
+      if (this.isPositionFree(tank, tank.x, newY)) {
+        tank.y = newY;
+      }
+    }
+  }
+
+  /**
+   * 卡死恢复：沿四个方向搜索最近的空闲位置
+   */
+  private pushOutOfWalls(tank: Tank) {
+    const step = 2;
+    const maxSearch = GAME_CONFIG.TILE_SIZE;
+
+    for (let dist = step; dist <= maxSearch; dist += step) {
+      // 上
+      if (this.isPositionFree(tank, tank.x, tank.y - dist)) {
+        tank.y -= dist;
+        return;
+      }
+      // 下
+      if (this.isPositionFree(tank, tank.x, tank.y + dist)) {
+        tank.y += dist;
+        return;
+      }
+      // 左
+      if (this.isPositionFree(tank, tank.x - dist, tank.y)) {
+        tank.x -= dist;
+        return;
+      }
+      // 右
+      if (this.isPositionFree(tank, tank.x + dist, tank.y)) {
+        tank.x += dist;
+        return;
+      }
+    }
   }
 
   /** 检查所有碰撞 */

@@ -189,13 +189,19 @@ export function generateWalls(layout?: number[][]): Wall[] {
       if (row === ROWS - 1 && (col === baseCol || col === baseCol + 1)) {
         const wall = new Wall(x, y, WallType.BASE);
         walls.push(wall);
-        // 基地周围的砖墙保护
+        // 基地周围的砖墙保护（避开玩家出生点）
+        const playerSpawnCol = Math.floor(COLS / 2) - 1;
+        const playerSpawnRow = ROWS - 2;
         if (row > 0) {
           for (let dr = -1; dr <= 0; dr++) {
             for (let dc = -1; dc <= 2; dc++) {
               if (dr === 0 && (dc === 0 || dc === 1)) continue; // 基地本身位置
-              const wx = (col + dc) * tileSize;
-              const wy = (row + dr) * tileSize;
+              const protectCol = col + dc;
+              const protectRow = row + dr;
+              // 跳过玩家出生点
+              if (protectRow === playerSpawnRow && protectCol === playerSpawnCol) continue;
+              const wx = protectCol * tileSize;
+              const wy = protectRow * tileSize;
               if (wx >= 0 && wy >= 0 && wx < GAME_CONFIG.CANVAS_WIDTH) {
                 walls.push(new Wall(wx, wy, WallType.BRICK));
               }
